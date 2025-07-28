@@ -1,8 +1,9 @@
+// main.js
 const { readFileSync } = require("fs");
 const ServicoCalculoFatura = require("./ServicoCalculoFatura");
+const Repositorio = require("./Repositorio");
 
-// -------------------- Funções Auxiliares (fora de gerarFaturaStr) --------------------
-
+// Função auxiliar para formatar valores monetários
 function formatarMoeda(valor) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -11,64 +12,32 @@ function formatarMoeda(valor) {
   }).format(valor / 100);
 }
 
-
-//function gerarFaturaHTML(fatura, pecas) {
-//  let resultado = `<html>\n`;
-//  resultado += `<p> Fatura ${fatura.cliente} </p>\n`;
-//  resultado += `<ul>\n`;
-//
-//  for (let apre of fatura.apresentacoes) {
-//    const peca = getPeca(pecas, apre);
-//    const total = calcularTotalApresentacao(pecas, apre);
-//    resultado += `<li>  ${peca.nome}: ${formatarMoeda(total)} (${
-//      apre.audiencia
-//    } assentos) </li>\n`;
-//  }
-//
-//  resultado += `</ul>\n`;
-//  resultado += `<p> Valor total: ${formatarMoeda(
-//    calcularTotalFatura(pecas, fatura.apresentacoes)
-//  )} </p>\n`;
-//  resultado += `<p> Créditos acumulados: ${calcularTotalCreditos(
-//    pecas,
-//    fatura.apresentacoes
-//  )} </p>\n`;
-//  resultado += `</html>`;
-//
-//  return resultado;
-//}
-
-
-// -------------------- Função Principal --------------------
-
-function gerarFaturaStr(fatura, pecas, calc) {
+// Função principal para gerar a string da fatura
+function gerarFaturaStr(fatura, calc) {
   let resultado = `Fatura ${fatura.cliente}\n`;
 
   for (let apre of fatura.apresentacoes) {
-    const peca = calc.getPeca(pecas, apre);
-    const total = calc.calcularTotalApresentacao(pecas, apre);
+    const peca = calc.getPeca(apre);
+    const total = calc.calcularTotalApresentacao(apre);
     resultado += `  ${peca.nome}: ${formatarMoeda(total)} (${
       apre.audiencia
     } assentos)\n`;
   }
 
   resultado += `Valor total: ${formatarMoeda(
-    calc.calcularTotalFatura(pecas, fatura.apresentacoes)
+    calc.calcularTotalFatura(fatura.apresentacoes)
   )}\n`;
   resultado += `Créditos acumulados: ${calc.calcularTotalCreditos(
-    pecas,
     fatura.apresentacoes
   )} \n`;
 
   return resultado;
 }
 
-// -------------------- Execução de Teste --------------------
+// Execução
+const faturas = JSON.parse(readFileSync("./faturas.json"));
+const repo = new Repositorio();
+const calc = new ServicoCalculoFatura(repo);
 
-const calc = new ServicoCalculoFatura();
-
-const fatura = JSON.parse(readFileSync("./faturas.json"));
-const pecas = JSON.parse(readFileSync("./pecas.json"));
-
-console.log(gerarFaturaStr(fatura, pecas, calc));
-
+const faturaStr = gerarFaturaStr(faturas, calc);
+console.log(faturaStr);
